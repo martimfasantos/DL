@@ -53,8 +53,12 @@ class Perceptron(LinearModel):
         y_i (scalar): the gold label for that example
         other arguments are ignored
         """
-        # Q1.1a
-        raise NotImplementedError
+        # Sign function
+        y_hat = np.argmax(self.W.dot(x_i))
+        if y_hat != y_i:
+            # Update weights
+            self.W[y_i] += x_i
+            self.W[y_hat] -= x_i
 
 
 class LogisticRegression(LinearModel):
