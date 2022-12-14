@@ -55,12 +55,6 @@ class Perceptron(LinearModel):
         """
         # Sign function
         y_hat = np.argmax(self.W.dot(x_i))
-        print(self.W.shape)
-        print("x")
-        print(x_i.shape)
-        print("=")
-        print(self.W.dot(x_i).shape)
-        print("-----")
         if y_hat != y_i:
             # Update weights
             self.W[y_i, :] += x_i
@@ -103,7 +97,6 @@ class MLP(object):
 
     def relu(self, x):
         return np.maximum(0, x)
-
 
     def forward(self, x):
         # Compute the forward pass of the network. At prediction time, there is
