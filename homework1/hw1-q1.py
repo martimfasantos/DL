@@ -55,10 +55,16 @@ class Perceptron(LinearModel):
         """
         # Sign function
         y_hat = np.argmax(self.W.dot(x_i))
+        print(self.W.shape)
+        print("x")
+        print(x_i.shape)
+        print("=")
+        print(self.W.dot(x_i).shape)
+        print("-----")
         if y_hat != y_i:
             # Update weights
-            self.W[y_i] += x_i
-            self.W[y_hat] -= x_i
+            self.W[y_i, :] += x_i
+            self.W[y_hat, :] -= x_i
 
 
 class LogisticRegression(LinearModel):
@@ -76,15 +82,96 @@ class MLP(object):
     # Q3.2b. This MLP skeleton code allows the MLP to be used in place of the
     # linear models with no changes to the training loop or evaluation code
     # in main().
-    def __init__(self, n_classes, n_features, hidden_size):
+    def __init__(self, n_classes, n_features, hidden_size, layers):
         # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError
+        W1 = np.random.normal(0.1, 0.1, size=(hidden_size, n_features))
+        b1 = np.zeros(hidden_size)
+        W2 = np.random.normal(0.1, 0.1, size=(n_classes, hidden_size))
+        b2 = np.zeros(n_classes)
+        print(W1.shape)
+        print(W2.shape)
+        self.weights = [W1, W2]
+        self.biases = [b1, b2]
+        self.num_layers = len(self.weights) # layers + 1
 
-    def predict(self, X):
+    def relu(self, x):
+        return np.maximum(0, x)
+
+
+    def forward(self, x):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes, whereas this is required
         # at training time.
-        raise NotImplementedError
+        g = self.relu # activation function for hidden layer
+        hiddens = []
+        for i in range(self.num_layers):
+            h = x if i == 0 else hiddens[i-1]
+            z = self.weights[i].dot(h) + self.biases[i]
+            if i < self.num_layers-1:
+                hiddens.append(g(z))
+        output = z # last z is the output
+        return output, hiddens
+
+    def compute_label_probabilities(self, output):
+        # Compute softmax transformation.
+        # TODO overflow aqui ?
+        probs = np.exp(output) / np.sum(np.exp(output))
+        return probs
+
+    def compute_loss(self, output, y):
+        probs = self.compute_label_probabilities(output)
+        loss = -y.dot(np.log(probs))
+        return loss  
+    
+    def backward(self, x, y, output, hiddens):
+        z = output
+        # print(z)
+
+        # Activation function for hidden layer
+        g = self.relu
+
+        # Grad of loss wrt last z (output).
+        probs = self.compute_label_probabilities(output)
+        grad_z = probs - y
+
+        grad_weights = []
+        grad_biases = []
+        for i in range(self.num_layers-1, -1, -1):
+
+            # Gradient of hidden parameters.
+            h = x if i == 0 else hiddens[i-1]
+            grad_weights.append(grad_z[:, None].dot(h[:, None].T)) # dL/dW
+            grad_biases.append(grad_z) # dL/db
+
+            # Gradient of hidden layer below.
+            grad_h = self.weights[i].T.dot(grad_z) # dL/dh
+
+            # Gradient of hidden layer below before activation.
+            assert(g == self.relu)
+            grad_z = grad_h * (1-h**2) # Grad of loss wrt z
+
+        grad_weights.reverse()
+        grad_biases.reverse()
+        return grad_weights, grad_biases
+
+    def update_parameters(self, grad_weights, grad_biases, eta):
+        for i in range(self.num_layers):
+            self.weights[i] -= eta*grad_weights[i]
+            self.biases[i] -= eta*grad_biases[i]
+
+    def predict_label(output):
+        y_hat = np.zeros_like(output)
+        y_hat[np.argmax(output)] = 1
+        return y_hat
+
+    def predict(self, X):
+        predicted_labels = []
+        for x in X:
+            output, _ = self.forward(x)
+            y_hat = self.predict_label(output)
+            predicted_labels.append(y_hat)
+        predicted_labels = np.array(predicted_labels)
+        return predicted_labels
 
     def evaluate(self, X, y):
         """
@@ -92,13 +179,17 @@ class MLP(object):
         y (n_examples): gold labels
         """
         # Identical to LinearModel.evaluate()
-        y_hat = self.predict(X)
+        y_hat, _ = self.predict(X)
         n_correct = (y == y_hat).sum()
         n_possible = y.shape[0]
         return n_correct / n_possible
 
     def train_epoch(self, X, y, learning_rate=0.001):
-        raise NotImplementedError
+        for x_i, y_i in zip(X, y):
+            output, hiddens = self.forward(x_i)
+            # print(loss = self.compute_loss(output, y))
+            grad_weights, grad_biases = self.backward(x_i, y_i, output, hiddens)
+            self.update_parameters(grad_weights, grad_biases, learning_rate)
 
 
 def plot(epochs, valid_accs, test_accs):
