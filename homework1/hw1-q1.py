@@ -196,14 +196,23 @@ class MLP(object):
         # print("Total loss: %f" % total_loss)
         
 
-def plot(epochs, valid_accs, test_accs):
+def save_plot(model):
+    if model == 'perceptron':
+        plt.savefig('results/Q1/Q1.1a.pdf', bbox_inches='tight')
+    elif model == 'logistic_regression':
+        plt.savefig('results/Q1/Q1.1b.pdf', bbox_inches='tight')
+    else:
+        plt.savefig('results/Q1/Q1.2b.pdf', bbox_inches='tight')
+        
+def plot(model, epochs, valid_accs, test_accs):
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.xticks(epochs)
     plt.plot(epochs, valid_accs, label='validation')
     plt.plot(epochs, test_accs, label='test')
     plt.legend()
-    plt.show()
+    save_plot(model)
+    # plt.show()
 
 
 def main():
@@ -259,8 +268,8 @@ def main():
         valid_accs.append(model.evaluate(dev_X, dev_y))
         test_accs.append(model.evaluate(test_X, test_y))
 
-    # plot
-    plot(epochs, valid_accs, test_accs)
+    # plot & save
+    plot(opt.model, epochs, valid_accs, test_accs)
 
 
 if __name__ == '__main__':
