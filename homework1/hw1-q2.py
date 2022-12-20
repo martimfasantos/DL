@@ -21,13 +21,13 @@ class LogisticRegression(nn.Module):
         n_features (int)
         """
         super().__init__()
-        self.linear = nn.Linear(n_features, n_classes)
+        self.layer = nn.Linear(n_features, n_classes)
 
     def forward(self, x, **kwargs):
         """
         x (batch_size x n_features): a batch of training examples
         """
-        y = self.linear(x) # y = Wx + b
+        y = self.layer(x) # y = Wx + b
         return y
 
 
@@ -43,13 +43,32 @@ class FeedforwardNetwork(nn.Module):
         layers (int)
         activation_type (str)
         dropout (float): dropout probability
-
-        As in logistic regression, the __init__ here defines a bunch of
-        attributes that each FeedforwardNetwork instance has. Note that nn
-        includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        # Implement me!
+        # Activation
+        if activation_type == 'tanh':
+            self.activation = nn.Tanh()
+        else:
+            self.activation = nn.ReLU()
+
+        # Droput
+        self.dropout = nn.Dropout(dropout)
+
+        # Layers
+        self.layers = nn.Sequential()
+        for i in range(layers + 1):
+            if i == 0: # input to l1
+                self.layers.append(nn.Linear(n_features, hidden_size))
+            elif i == layers: # last layer to output
+                self.layers.append(nn.Linear(hidden_size, n_classes))
+                break
+            else:
+                self.layers.append(nn.Linear(hidden_size, hidden_size))
+            # add dropout
+            self.layers.append(self.dropout)
+            # add activation
+            self.layers.append(self.activation)
+        # print(self.layers)
 
     def forward(self, x, **kwargs):
         """
@@ -59,7 +78,8 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        raise NotImplementedError
+        output = self.layers(x)
+        return output
 
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
@@ -70,15 +90,15 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     optimizer: optimizer used in gradient step
     criterion: loss function
     """
-    # reset the gradients
+    # Reset the gradients
     optimizer.zero_grad()
-    # compute the model output
+    # Compute the model output
     y_hat = model(X)
-    # calculate the loss
+    # Compute loss
     loss = criterion(y_hat, y)
-    # credit assignment
+    # Perform backpropagation
     loss.backward()
-    # update model weights
+    # Update model weights
     optimizer.step()
 
     return loss.item()
@@ -103,13 +123,21 @@ def evaluate(model, X, y):
     model.train()
     return n_correct / n_possible
 
+def save_plot(model, n_layers, name):
+    if model == 'linear_regression':
+        plt.savefig('results/Q2/Q2.1/%s.pdf' % (name), bbox_inches='tight')
+    elif n_layers == 1:
+        plt.savefig('results/Q2/Q2.2/%s.pdf' % (name), bbox_inches='tight')
+    else:
+        plt.savefig('results/Q2/Q2.3/%s.pdf' % (name), bbox_inches='tight')
 
-def plot(epochs, plottable, ylabel='', name=''):
+def plot(model, n_layers, epochs, plottable, ylabel='', name=''):
     plt.clf()
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
-    plt.savefig('results/Q2/%s.pdf' % (name), bbox_inches='tight')
+    save_plot(model, n_layers, name)
+    # plt.savefig('%s.pdf' % (name), bbox_inches='tight')
 
 
 def main():
@@ -124,7 +152,7 @@ def main():
                         help="Size of training batch.")
     parser.add_argument('-learning_rate', type=float, default=0.01)
     parser.add_argument('-l2_decay', type=float, default=0)
-    parser.add_argument('-hidden_sizes', type=int, default=100)
+    parser.add_argument('-hidden_size', type=int, default=100)
     parser.add_argument('-layers', type=int, default=1)
     parser.add_argument('-dropout', type=float, default=0.3)
     parser.add_argument('-activation',
@@ -197,8 +225,8 @@ def main():
     else:
         config = "{}-{}-{}-{}-{}-{}-{}".format(opt.learning_rate, opt.hidden_size, opt.layers, opt.dropout, opt.activation, opt.optimizer, opt.batch_size)
 
-    plot(epochs, train_mean_losses, ylabel='Loss', name='{}-training-loss-{}'.format(opt.model, config))
-    plot(epochs, valid_accs, ylabel='Accuracy', name='{}-validation-accuracy-{}'.format(opt.model, config))
+    plot(opt.model, opt.layers, epochs, train_mean_losses, ylabel='Loss', name='{}-training-loss-{}'.format(opt.model, config))
+    plot(opt.model, opt.layers, epochs, valid_accs, ylabel='Accuracy', name='{}-validation-accuracy-{}'.format(opt.model, config))
 
 
 if __name__ == '__main__':

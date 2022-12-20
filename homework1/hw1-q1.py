@@ -117,10 +117,10 @@ class MLP(object):
         probs = np.exp(x - np.max(x)) / np.sum(np.exp(x - np.max(x)))
         return probs
 
-    def compute_gold_label(self, n_classes, y):
-        gold_label = np.zeros(n_classes)
-        gold_label[y] = 1
-        return gold_label
+    def compute_y_one_hot(self, n_classes, y):
+        y_one_hot = np.zeros(n_classes)
+        y_one_hot[y] = 1
+        return y_one_hot
 
     def compute_loss(self, output, y):
         probs = self.softmax(output)
@@ -149,7 +149,6 @@ class MLP(object):
 
             # Gradient of hidden layer below before activation.
             assert(g == self.relu)
-            # print(f'update grad')
             grad_z = grad_h * self.relu_grad(h) # Grad of loss wrt z
 
         grad_weights.reverse()
@@ -188,7 +187,7 @@ class MLP(object):
         total_loss = 0
         for x_i, y_i in zip(X, y):            
             output, hiddens = self.forward_propagation(x_i)
-            y_i = self.compute_gold_label(len(output), y_i)
+            y_i = self.compute_y_one_hot(len(output), y_i)
             loss = self.compute_loss(output, y_i)
             total_loss += loss
             grad_weights, grad_biases = self.back_propagation(x_i, y_i, output, hiddens)
