@@ -45,7 +45,7 @@ class LinearModel(object):
         n_possible = y.shape[0]
         return n_correct / n_possible
 
-
+# Q1.1a
 class Perceptron(LinearModel):
     def update_weight(self, x_i, y_i, **kwargs):
         """
@@ -60,7 +60,7 @@ class Perceptron(LinearModel):
             self.W[y_i, :] += x_i
             self.W[y_hat, :] -= x_i
 
-
+# Q1.1b
 class LogisticRegression(LinearModel):
     def update_weight(self, x_i, y_i, learning_rate=0.001):
         """
@@ -73,24 +73,32 @@ class LogisticRegression(LinearModel):
         # One-hot vector with the true label (num_labels x 1).
         y_one_hot = np.zeros((np.size(self.W, 0), 1))
         y_one_hot[y_i] = 1
-        # Sigmoid function (num_labels x 1)
+        # Softmax function (num_labels x 1)
         label_probabilities = np.exp(label_scores) / np.sum(np.exp(label_scores))
-        # SGD update (num_labels x num_features=)
+        # SGD update (num_labels x num_features)
         self.W += learning_rate * (y_one_hot - label_probabilities) * x_i[None,:]
 
-
+# Q1.2b
 class MLP(object):
     # Q3.2b. This MLP skeleton code allows the MLP to be used in place of the
     # linear models with no changes to the training loop or evaluation code
     # in main().
     def __init__(self, n_classes, n_features, hidden_size, layers):
-        # Initialize an MLP with a single hidden layer.
-        W1 = np.random.normal(0.1, 0.1, size=(hidden_size, n_features))
-        b1 = np.zeros(hidden_size)
-        W2 = np.random.normal(0.1, 0.1, size=(n_classes, hidden_size))
-        b2 = np.zeros(n_classes)
-        self.weights = [W1, W2]
-        self.biases = [b1, b2]
+        # Initialize an MLP.
+        self.weights = []
+        self.biases = []
+        
+        for i in range(layers + 1):
+            if i == 0: # input to l1
+                self.weights.append(np.random.normal(0.1, 0.1, size=(hidden_size, n_features)))
+                self.biases.append(np.zeros(hidden_size))
+            elif i == layers: # last layer to output
+                self.weights.append(np.random.normal(0.1, 0.1, size=(n_classes, hidden_size)))
+                self.biases.append(np.zeros(n_classes))
+            else:
+                self.weights.append(np.random.normal(0.1, 0.1, size=(hidden_size, hidden_size)))
+                self.biases.append(np.zeros(hidden_size))
+
         self.num_layers = len(self.weights) # layers + 1
 
     def relu(self, x):
@@ -100,7 +108,7 @@ class MLP(object):
         return 1. * (x > 0)
 
     def forward_propagation(self, x):
-        # Activation function for hidden layer
+        # Activation function for hidden layers
         g = self.relu
 
         hiddens = []
