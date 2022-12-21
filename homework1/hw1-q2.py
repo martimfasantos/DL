@@ -31,7 +31,7 @@ class LogisticRegression(nn.Module):
         return y
 
 
-# Q2.2
+# Q2.2 & Q2.3
 class FeedforwardNetwork(nn.Module):
     def __init__(
             self, n_classes, n_features, hidden_size, layers,
@@ -64,10 +64,10 @@ class FeedforwardNetwork(nn.Module):
                 break
             else:
                 self.layers.append(nn.Linear(hidden_size, hidden_size))
-            # add dropout
-            self.layers.append(self.dropout)
             # add activation
             self.layers.append(self.activation)
+            # add dropout
+            self.layers.append(self.dropout)
         # print(self.layers)
 
     def forward(self, x, **kwargs):
@@ -137,8 +137,7 @@ def plot(model, n_layers, epochs, plottable, ylabel='', name=''):
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
     save_plot(model, n_layers, name)
-    # plt.savefig('%s.pdf' % (name), bbox_inches='tight')
-
+    
 
 def main():
     parser = argparse.ArgumentParser()
