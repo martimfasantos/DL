@@ -124,7 +124,7 @@ def evaluate(model, X, y):
     return n_correct / n_possible
 
 def save_plot(model, n_layers, name):
-    if model == 'linear_regression':
+    if model == 'logistic_regression':
         plt.savefig('results/Q2/Q2.1/%s.pdf' % (name), bbox_inches='tight')
     elif n_layers == 1:
         plt.savefig('results/Q2/Q2.2/%s.pdf' % (name), bbox_inches='tight')
