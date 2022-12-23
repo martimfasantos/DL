@@ -51,7 +51,7 @@ class FeedforwardNetwork(nn.Module):
         else:
             self.activation = nn.ReLU()
 
-        # Droput
+        # Dropout
         self.dropout = nn.Dropout(dropout)
 
         # Layers

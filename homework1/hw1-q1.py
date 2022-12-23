@@ -210,6 +210,7 @@ def save_plot(model):
         plt.savefig('results/Q1/Q1.1b.pdf', bbox_inches='tight')
     else:
         plt.savefig('results/Q1/Q1.2b.pdf', bbox_inches='tight')
+   
         
 def plot(model, epochs, valid_accs, test_accs):
     plt.xlabel('Epoch')
