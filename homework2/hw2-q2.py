@@ -20,7 +20,7 @@ class CNN(nn.Module):
     def __init__(self, dropout_prob):
         super(CNN, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 8, kernel_size=5)
+        self.conv1 = nn.Conv2d(1, 8, kernel_size=5, padding=2)
         self.conv1_activ = F.relu
         self.conv1_max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -28,14 +28,14 @@ class CNN(nn.Module):
         self.conv2_activ = F.relu
         self.conv2_max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.fc1 = nn.Linear(320, 600) # TODO nao esta certo o input
+        self.fc1 = nn.Linear(576, 600)
         self.fc1_drop = nn.Dropout2d(dropout_prob)
 
-        self.fc2 = nn.Linear(50, 120) # TODO nao esta certo o input
+        self.fc2 = nn.Linear(600, 120)
         self.fc2_activ = F.relu
 
-        self.fc3 = nn.Linear(120, 8) # TODO nao esta certo o input
-        self.log_softmax = F.log_softmax()
+        self.fc3 = nn.Linear(120, 10)
+        self.log_softmax = F.log_softmax
 
         
     def forward(self, x):
@@ -43,22 +43,27 @@ class CNN(nn.Module):
         x (batch_size x n_channels x height x width): a batch of training 
         examples
         """
-        print(x) # TODO dimensoes nao estao a bater certo
-
-        # Batch size = 8, images ?x? =>
+        # Batch size = 8, images 28x28 =>
         #     x.shape = [8, 1, 28, 28]
         x = self.conv1_activ(self.conv1_max_pool(self.conv1(x)))
-
+        # Convolution with 5x5 filter with (5-1)/2 padding to preserve image size and 8 channels =>
+        #     x.shape = [8, 8, 28, 28] since 28 = 28 - 5 + 2 * 2 + 1
+        # Max pooling with kernel size of 2x2 and stride of 2 =>
+        #     x.shape = [8, 8, 14, 14]
         x = self.conv2_activ(self.conv2_max_pool(self.conv2(x)))
-
-        # x = x.view(-1, 320)
-
+        # Convolution with 3x3 filter without padding and 16 channels =>
+        #     x.shape = [8, 16, 12, 12] since 12 = 14 - 3 + 1
+        # Max pooling with kernel size of 2x2 and stride of 2 =>
+        #     x.shape = [8, 16, 6, 6]
+        x = x.view(-1, 576)
+        # Reshape =>
+        #     x.shape = [8, 16*6*6=576]
         x = self.fc1_drop(self.fc1(x))
 
         x = self.fc2_activ(self.fc2(x))
 
         x = self.fc3(x)
-        output = self.log_softmax(x)
+        output = self.log_softmax(x, dim=1)
 
         return output
 
@@ -73,6 +78,7 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     # set the parameter gradients to zero
     optimizer.zero_grad()
     # Compute the model output
+    X = X.view(-1, 1, 28, 28) # reshape
     y_hat = model(X)
     # Compute loss
     loss = criterion(y_hat, y)
@@ -85,7 +91,8 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
 
 def predict(model, X):
     """X (n_examples x n_features)"""
-    scores = model(X)  # (n_examples x n_classes)
+    X = X.view(-1, 1, 28, 28) # reshape
+    scores = model(X)  # (batch_size x n_channels x height x width)
     predicted_labels = scores.argmax(dim=-1)  # (n_examples)
     return predicted_labels
 
@@ -108,7 +115,7 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
-    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig('results/Q2/%s.pdf' % (name), bbox_inches='tight')
 
 
 activation = {}
