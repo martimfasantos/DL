@@ -21,51 +21,66 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
 
         self.conv1 = nn.Conv2d(1, 8, kernel_size=5, padding=2)
-        self.conv1_activ = F.relu
-        self.conv1_max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu1= F.relu
+        self.max_pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv2 = nn.Conv2d(8, 16, kernel_size=3)
-        self.conv2_activ = F.relu
-        self.conv2_max_pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.relu2 = F.relu
+        self.max_pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.fc1 = nn.Linear(576, 600)
-        self.fc1_drop = nn.Dropout2d(dropout_prob)
+        self.relu3 = F.relu
+        self.dropout = nn.Dropout(dropout_prob)
 
         self.fc2 = nn.Linear(600, 120)
-        self.fc2_activ = F.relu
+        self.relu4 = F.relu
 
         self.fc3 = nn.Linear(120, 10)
         self.log_softmax = F.log_softmax
 
-        
     def forward(self, x):
         """
-        x (batch_size x n_channels x height x width): a batch of training 
-        examples
+        x (n_examples x n_features): a batch of training examples
         """
+        x = x.view(-1, 1, 28, 28) # reshape
         # Batch size = 8, images 28x28 =>
         #     x.shape = [8, 1, 28, 28]
-        x = self.conv1_activ(self.conv1_max_pool(self.conv1(x)))
+
+        x = self.conv1(x)
         # Convolution with 5x5 filter with (5-1)/2 padding to preserve image size and 8 channels =>
         #     x.shape = [8, 8, 28, 28] since 28 = 28 - 5 + 2 * 2 + 1
+        x = self.relu1(x)
+        x = self.max_pool1(x)
         # Max pooling with kernel size of 2x2 and stride of 2 =>
         #     x.shape = [8, 8, 14, 14]
-        x = self.conv2_activ(self.conv2_max_pool(self.conv2(x)))
+
+        x = self.conv2(x)
         # Convolution with 3x3 filter without padding and 16 channels =>
         #     x.shape = [8, 16, 12, 12] since 12 = 14 - 3 + 1
+        x = self.relu2(x)
+        x = self.max_pool2(x)
         # Max pooling with kernel size of 2x2 and stride of 2 =>
         #     x.shape = [8, 16, 6, 6]
+        
         x = x.view(-1, 576)
         # Reshape =>
         #     x.shape = [8, 16*6*6=576]
-        x = self.fc1_drop(self.fc1(x))
 
-        x = self.fc2_activ(self.fc2(x))
+        x = self.fc1(x)
+        #     x.shape = [8, 600]
+        x = self.relu3(x)
+        x = self.dropout(x)
+
+        x = self.fc2(x)
+        #     x.shape = [8, 120]
+        x = self.relu4(x)
 
         x = self.fc3(x)
+        #     x.shape = [8, 10]
         output = self.log_softmax(x, dim=1)
 
         return output
+
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
     """
@@ -78,7 +93,6 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     # set the parameter gradients to zero
     optimizer.zero_grad()
     # Compute the model output
-    X = X.view(-1, 1, 28, 28) # reshape
     y_hat = model(X)
     # Compute loss
     loss = criterion(y_hat, y)
@@ -89,10 +103,10 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
 
     return loss.item()
 
+
 def predict(model, X):
     """X (n_examples x n_features)"""
-    X = X.view(-1, 1, 28, 28) # reshape
-    scores = model(X)  # (batch_size x n_channels x height x width)
+    scores = model(X)
     predicted_labels = scores.argmax(dim=-1)  # (n_examples)
     return predicted_labels
 
@@ -115,7 +129,7 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
-    plt.savefig('results/Q2/%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig('results/Q2/Q2.4/%s.pdf' % (name), bbox_inches='tight')
 
 
 activation = {}
@@ -124,10 +138,11 @@ def get_activation(name):
         activation[name] = output.detach()
     return hook
 
-def plot_feature_maps(model, train_dataset):
+
+def plot_feature_maps(model, learning_rate, train_dataset):
     
     model.conv1.register_forward_hook(get_activation('conv1'))
-    
+
     data, _ = train_dataset[4]
     data.unsqueeze_(0)
     output = model(data)
@@ -143,7 +158,7 @@ def plot_feature_maps(model, train_dataset):
         for j in range(act.size(0)//2):
             ax[i,j].imshow(act[k].detach().cpu().numpy())
             k+=1  
-            plt.savefig('activation_maps.pdf') 
+            plt.savefig(f'results/Q2/Q2.5/activation_maps_{learning_rate}.pdf') 
 
 
 def main():
@@ -211,7 +226,7 @@ def main():
     plot(epochs, train_mean_losses, ylabel='Loss', name='CNN-training-loss-{}'.format(config))
     plot(epochs, valid_accs, ylabel='Accuracy', name='CNN-validation-accuracy-{}'.format(config))
     
-    plot_feature_maps(model, dataset)
+    plot_feature_maps(model, opt.learning_rate, dataset)
 
 if __name__ == '__main__':
     main()
