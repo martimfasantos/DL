@@ -43,40 +43,40 @@ class CNN(nn.Module):
         x (n_examples x n_features): a batch of training examples
         """
         x = x.view(-1, 1, 28, 28) # reshape
-        # Batch size = 8, images 28x28 =>
-        #     x.shape = [8, 1, 28, 28]
+        # Batch size = N, images 28x28 =>
+        #     x.shape = [N, 1, 28, 28]
 
         x = self.conv1(x)
         # Convolution with 5x5 filter with (5-1)/2 padding to preserve image size and 8 channels =>
-        #     x.shape = [8, 8, 28, 28] since 28 = 28 - 5 + 2 * 2 + 1
+        #     x.shape = [N, 8, 28, 28] since 28 = 28 - 5 + 2 * 2 + 1
         x = self.relu1(x)
         x = self.max_pool1(x)
         # Max pooling with kernel size of 2x2 and stride of 2 =>
-        #     x.shape = [8, 8, 14, 14]
+        #     x.shape = [N, 8, 14, 14]
 
         x = self.conv2(x)
         # Convolution with 3x3 filter without padding and 16 channels =>
-        #     x.shape = [8, 16, 12, 12] since 12 = 14 - 3 + 1
+        #     x.shape = [N, 16, 12, 12] since 12 = 14 - 3 + 1
         x = self.relu2(x)
         x = self.max_pool2(x)
         # Max pooling with kernel size of 2x2 and stride of 2 =>
-        #     x.shape = [8, 16, 6, 6]
+        #     x.shape = [N, 16, 6, 6]
         
         x = x.view(-1, 576)
         # Reshape =>
-        #     x.shape = [8, 16*6*6=576]
+        #     x.shape = [N, 16*6*6=576]
 
         x = self.fc1(x)
-        #     x.shape = [8, 600]
+        #     x.shape = [N, 600]
         x = self.relu3(x)
         x = self.dropout(x)
 
         x = self.fc2(x)
-        #     x.shape = [8, 120]
+        #     x.shape = [N, 120]
         x = self.relu4(x)
 
         x = self.fc3(x)
-        #     x.shape = [8, 10]
+        #     x.shape = [N, 10]
         output = self.log_softmax(x, dim=1)
 
         return output
@@ -106,7 +106,7 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
 
 def predict(model, X):
     """X (n_examples x n_features)"""
-    scores = model(X)
+    scores = model(X) # (n_examples x n_classes)
     predicted_labels = scores.argmax(dim=-1)  # (n_examples)
     return predicted_labels
 
@@ -148,7 +148,7 @@ def plot_feature_maps(model, learning_rate, train_dataset):
     output = model(data)
 
     plt.imshow(data.reshape(28,-1)) 
-    plt.savefig('original_image.pdf')
+    plt.savefig(f'results/Q2/Q2.5/original_image_{learning_rate}.pdf')
 
     k=0
     act = activation['conv1'].squeeze()
