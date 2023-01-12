@@ -98,26 +98,24 @@ class Encoder(nn.Module):
         self,
         src,
         lengths,
+        hidden=None
     ):
-        # src: (batch_size, max_src_len)
-        # lengths: (batch_size)
-        #############################################
-        # TODO: Implement the forward pass of the encoder
-        # Hints:
-        # - Use torch.nn.utils.rnn.pack_padded_sequence to pack the padded sequences
-        #   (before passing them to the LSTM)
-        # - Use torch.nn.utils.rnn.pad_packed_sequence to unpack the packed sequences
-        #   (after passing them to the LSTM)
-        #############################################
-        raise NotImplementedError
-        #############################################
-        # END OF YOUR CODE
-        #############################################
+        emb = self.embedding(src)
+        # Aplly dropout layer to input embeddings
+        emb = self.dropout(emb)
+
+        packed = pack(emb, lengths, batch_first=True, enforce_sorted=False)
+
+        output, hidden_n = self.lstm(packed, hidden)
+
+        enc_output, _ = unpack(output, batch_first=True)
+        # Final hidden state of the forward and backward LSTMs
+        final_hidden = (hidden_n[0], hidden_n[1])
+
         # enc_output: (batch_size, max_src_len, hidden_size)
         # final_hidden: tuple with 2 tensors
         # each tensor is (num_layers * num_directions, batch_size, hidden_size)
-        # TODO: Uncomment the following line when you implement the forward pass
-        # return enc_output, final_hidden
+        return enc_output, final_hidden
 
 
 class Decoder(nn.Module):
