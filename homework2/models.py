@@ -102,20 +102,21 @@ class Encoder(nn.Module):
     def forward(
         self,
         src,
-        lengths,
-        hidden=None
+        lengths
     ):
+    
         emb = self.embedding(src)
         # Aplly dropout layer to input embeddings
         emb = self.dropout(emb)
 
-        packed = pack(emb, lengths, batch_first=True, enforce_sorted=False)
+        packed = pack(emb, lengths.cpu(), batch_first=True, enforce_sorted=False)
 
-        output, hidden_n = self.lstm(packed, hidden)
+        output, final_hidden = self.lstm(packed)
 
         enc_output, _ = unpack(output, batch_first=True)
-        # Final hidden state of the forward and backward LSTMs
-        final_hidden = (hidden_n[0], hidden_n[1])
+        
+        # Aplly dropout layer to the output
+        enc_output = self.dropout(enc_output)
 
         # enc_output: (batch_size, max_src_len, hidden_size)
         # final_hidden: tuple with 2 tensors
