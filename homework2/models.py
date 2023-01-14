@@ -166,8 +166,6 @@ class Decoder(nn.Module):
         emb = self.dropout(emb)
 
         output, dec_state = self.lstm(emb, dec_state)
-        # print("output")
-        # print(output)
 
         if self.attn is not None:
             output = self.attn(
