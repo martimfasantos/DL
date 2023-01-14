@@ -104,17 +104,18 @@ class Encoder(nn.Module):
         src,
         lengths
     ):
-    
+        # src: (batch_size, max_src_len)
+        # lengths: (batch_size)
+
         emb = self.embedding(src)
         # Aplly dropout layer to input embeddings
         emb = self.dropout(emb)
 
-        packed = pack(emb, lengths.cpu(), batch_first=True, enforce_sorted=False)
+        packed = pack(emb, lengths, batch_first=True, enforce_sorted=False)
 
         output, final_hidden = self.lstm(packed)
 
         enc_output, _ = unpack(output, batch_first=True)
-        
         # Aplly dropout layer to the output
         enc_output = self.dropout(enc_output)
 
@@ -169,14 +170,17 @@ class Decoder(nn.Module):
         
         if dec_state[0].shape[0] == 2:
             dec_state = reshape_state(dec_state)
+
+        if tgt.size(1) > 1:
+            tgt = tgt[:,:-1]
         
         emb = self.embedding(tgt)
         # Apply dropout layer to input embeddings
         emb = self.dropout(emb)
 
         output, dec_state = self.lstm(emb, dec_state)
-        print("output")
-        print(output)
+        # print("output")
+        # print(output)
 
         #############################################
         # TODO: Implement the forward pass of the decoder

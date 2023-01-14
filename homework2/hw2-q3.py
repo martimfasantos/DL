@@ -256,7 +256,7 @@ def main():
     plt.ylabel("Error Rate")
     plt.legend()
     plt.savefig(
-        "attn_%s_err_rate.pdf" % (str(opt.use_attn),),
+        "results/Q3/attn_%s_err_rate.pdf" % (str(opt.use_attn),),
         bbox_inches="tight",
     )
 
