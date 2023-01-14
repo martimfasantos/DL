@@ -29,35 +29,22 @@ class Attention(nn.Module):
         encoder_outputs,
         src_lengths,
     ):
-        # query: (batch_size, 1, hidden_dim)
-        # encoder_outputs: (batch_size, max_src_len, hidden_dim) = context
-        # src_lengths: (batch_size)
-        # we will need to use this mask to assign float("-inf") in the attention scores
-        # of the padding tokens (such that the output of the softmax is 0 in those positions)
-        # Tip: use torch.masked_fill to do this
-        # src_seq_mask: (batch_size, max_src_len)
-        # the "~" is the elementwise NOT operator
         src_seq_mask = ~self.sequence_mask(src_lengths)
-        #############################################
-        # TODO: Implement the forward pass of the attention layer
-        # Hints:
-        # - Use torch.bmm to do the batch matrix multiplication
-        #    (it does matrix multiplication for each sample in the batch)
-        # - Use torch.softmax to do the softmax
-        # - Use torch.tanh to do the tanh
-        # - Use torch.masked_fill to do the masking of the padding tokens
-        #############################################
-        z = torch.bmm(query, self.linear_in.transpose(1, 2))
-        scores = torch.bmm(encoder_outputs, z.transpose(1,2))
-        scores_masked = scores.masked_fill(src_seq_mask == 0, float("-inf")) # not sure how to do this
-        probabilities = torch.softmax(scores_masked)
-        c = torch.bmm(probabilities, encoder_outputs.transpose(1,2))
-        attn_out = torch.tanh(torch.bmm(torch.cat([c, query], self.linear_out.transpose(1,2))))
-        #############################################
-        # END OF YOUR CODE
-        #############################################
-        # attn_out: (batch_size, 1, hidden_size)
-        # TODO: Uncomment the following line when you implement the forward pass
+
+        # Scores  s = Wq * hi
+        z = torch.bmm(self.linear_in(query), self.linear_in(encoder_outputs).transpose(1,2))
+
+        z.masked_fill_(src_seq_mask.unsqueeze(1), float("-inf")) 
+
+        # Probabilities
+        probabilities = torch.softmax(z, dim=2)
+
+        # Context vector
+        c = torch.bmm(probabilities, encoder_outputs)
+
+        # Attention 
+        attn_out = torch.tanh(self.linear_out(torch.cat((c, query), dim=2)))
+
         return attn_out
 
     def sequence_mask(self, lengths):
