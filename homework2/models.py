@@ -182,28 +182,16 @@ class Decoder(nn.Module):
         # print("output")
         # print(output)
 
-        #############################################
-        # TODO: Implement the forward pass of the decoder
-        # Hints:
-        # - the input to the decoder is the previous target token,
-        #   and the output is the next target token
-        # - New token representations should be generated one at a time, given
-        #   the previous token representation and the previous decoder state
-        # - Add this somewhere in the decoder loop when you implement the attention mechanism in 3.2:
         if self.attn is not None:
             output = self.attn(
                 output,
                 encoder_outputs,
                 src_lengths,
             )
-        #############################################
-        #############################################
-        # END OF YOUR CODE
-        #############################################
+
         # outputs: (batch_size, max_tgt_len, hidden_size)
         # dec_state: tuple with 2 tensors
         # each tensor is (num_layers, batch_size, hidden_size)
-        # TODO: Uncomment the following line when you implement the forward pass
         return output, dec_state
 
 
