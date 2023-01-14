@@ -47,17 +47,26 @@ class Attention(nn.Module):
         # - Use torch.tanh to do the tanh
         # - Use torch.masked_fill to do the masking of the padding tokens
         #############################################
-        z = torch.bmm(query, self.linear_in.transpose(1, 2))
-        scores = torch.bmm(encoder_outputs, z.transpose(1,2))
-        scores_masked = scores.masked_fill(src_seq_mask == 0, float("-inf")) # not sure how to do this
-        probabilities = torch.softmax(scores_masked)
+        z = torch.bmm(self.linear_in(query), self.linear_in(encoder_outputs).transpose(1,2))
+        scores = torch.bmm(z, encoder_outputs)
+        #scores_masked = scores.masked_fill(src_seq_mask == 0, float("-inf")) # not sure how to do this
+        probabilities = torch.softmax(scores, 2)
         c = torch.bmm(probabilities, encoder_outputs.transpose(1,2))
-        attn_out = torch.tanh(torch.bmm(torch.cat([c, query], self.linear_out.transpose(1,2))))
+        print("ola5")
+        print(z.shape)
+        print(probabilities.shape)
+        print(encoder_outputs.shape)
+        print(c.shape)
+        print(query.shape)
+        attn_out1 = torch.cat([c, query])
+        attn_out2 = self.linear_out(attn_out1, dim=2)
+        attn_out = torch.tanh(attn_out2)
         #############################################
         # END OF YOUR CODE
         #############################################
         # attn_out: (batch_size, 1, hidden_size)
         # TODO: Uncomment the following line when you implement the forward pass
+        print("\nDEU CERTO")
         return attn_out
 
     def sequence_mask(self, lengths):
