@@ -31,13 +31,13 @@ class Attention(nn.Module):
     ):
         src_seq_mask = ~self.sequence_mask(src_lengths)
 
-        # Scores  s = Wq * hi
-        z = torch.bmm(self.linear_in(query), self.linear_in(encoder_outputs).transpose(1,2))
+        # Scores  s = (W^T * q) * hi
+        s = torch.bmm(self.linear_in(query), encoder_outputs.transpose(1,2))
 
-        z.masked_fill_(src_seq_mask.unsqueeze(1), float("-inf")) 
+        s.masked_fill_(src_seq_mask.unsqueeze(1), float("-inf")) 
 
         # Probabilities
-        probabilities = torch.softmax(z, dim=2)
+        probabilities = torch.softmax(s, dim=2)
 
         # Context vector
         c = torch.bmm(probabilities, encoder_outputs)
