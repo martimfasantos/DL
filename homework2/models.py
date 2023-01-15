@@ -43,7 +43,7 @@ class Attention(nn.Module):
         c = torch.bmm(probabilities, encoder_outputs)
 
         # Attention 
-        attn_out = torch.tanh(self.linear_out(torch.cat((c, query), dim=2)))
+        attn_out = torch.tanh(self.linear_out(torch.cat((query, c), dim=2)))
 
         return attn_out
 
