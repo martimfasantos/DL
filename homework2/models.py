@@ -173,6 +173,9 @@ class Decoder(nn.Module):
                 encoder_outputs,
                 src_lengths,
             )
+        
+        # Aplly dropout layer to the output
+        output = self.dropout(output)
 
         # outputs: (batch_size, max_tgt_len, hidden_size)
         # dec_state: tuple with 2 tensors
